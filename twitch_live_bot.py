@@ -20,8 +20,8 @@ def get_twitch_oauth_token(client_id, client_secret):
     response = requests.post(url, params=params)
     return response.json().get('access_token')
 
-# Check if the channel is live
-def is_channel_live(channel_name, client_id, oauth_token):
+# Check if the channel is live and get stream data
+def get_stream_data(channel_name, client_id, oauth_token):
     url = f'https://api.twitch.tv/helix/streams?user_login={channel_name}'
     headers = {
         'Client-ID': client_id,
@@ -29,23 +29,62 @@ def is_channel_live(channel_name, client_id, oauth_token):
     }
     response = requests.get(url, headers=headers)
     data = response.json()
-    return len(data['data']) > 0
+    if len(data['data']) > 0:
+        return data['data'][0]  # Return stream data
+    return None
 
 # Send notification to Discord
-def send_discord_notification(webhook_url, message):
-    data = {
-        'content': message
+def send_discord_notification(webhook_url, channel_name, stream_data):
+    channel_url = f"https://www.twitch.tv/{channel_name}"
+    stream_preview_url = stream_data['thumbnail_url'].replace('{width}', '1280').replace('{height}', '720')
+    profile_image_url = "https://static-cdn.jtvnw.net/jtv_user_pictures/28471127-7b48-4f6c-a3d2-d459d2f0419d-profile_image-70x70.png"  # Example profile image URL, replace as needed
+    created_at = stream_data['started_at']
+    game_name = stream_data['game_name']
+
+    embed_data = {
+        "content": f"{channel_name} มาแล้ว @everyone",
+        "embeds": [{
+            "title": channel_url,
+            "url": channel_url,
+            "color": 6570404,
+            "footer": {
+                "text": created_at
+            },
+            "image": {
+                "url": stream_preview_url
+            },
+            "author": {
+                "name": f"{channel_name} มาแล้ว!"
+            },
+            "thumbnail": {
+                "url": profile_image_url
+            },
+            "fields": [
+                {
+                    "name": "Playing",
+                    "value": game_name,
+                    "inline": true
+                },
+                {
+                    "name": "Started at (streamer timezone)",
+                    "value": created_at,
+                    "inline": true
+                }
+            ]
+        }]
     }
-    requests.post(webhook_url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+    headers = {'Content-Type': 'application/json'}
+    requests.post(webhook_url, data=json.dumps(embed_data), headers=headers)
 
 def main():
     oauth_token = get_twitch_oauth_token(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET)
     notified = False
 
     while True:
-        if is_channel_live(TWITCH_CHANNEL_NAME, TWITCH_CLIENT_ID, oauth_token):
+        stream_data = get_stream_data(TWITCH_CHANNEL_NAME, TWITCH_CLIENT_ID, oauth_token)
+        if stream_data:
             if not notified:
-                send_discord_notification(DISCORD_WEBHOOK_URL, f"{TWITCH_CHANNEL_NAME} is now live on Twitch!")
+                send_discord_notification(DISCORD_WEBHOOK_URL, TWITCH_CHANNEL_NAME, stream_data)
                 notified = True
         else:
             notified = False

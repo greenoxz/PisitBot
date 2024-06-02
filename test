@@ -1,0 +1,35 @@
+{
+  "content": "{{ChannelName}} มาแล้ว @everyone",
+  "embeds": [{
+    "title": "{{ChannelUrl}}",
+    "url": "{{ChannelUrl}}",
+    "color": 6570404,
+    "footer": {
+      "text": "{{CreatedAt}}"
+    },
+    "image": {
+      "url": "{{StreamPreview}}"
+    },
+    "author": {
+      "name": "{{ChannelName}} มาแล้ว!"
+    },
+    "image": {
+      "url": "https://static-cdn.jtvnw.net/previews-ttv/live_user_pisitz-1280x720.jpg"
+    },
+    "thumnail" : {
+      "url": "https://static-cdn.jtvnw.net/jtv_user_pictures/28471127-7b48-4f6c-a3d2-d459d2f0419d-profile_image-70x70.png"
+    },
+    "fields": [
+      {
+        "name": "Playing",
+        "value": "{{Game}}",
+        "inline": true
+      },
+      {
+        "name": "Started at (streamer timezone)",
+        "value": "{{CreatedAt}}",
+        "inline": true
+      }
+    ]
+  }]
+}
